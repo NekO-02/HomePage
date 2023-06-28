@@ -1,12 +1,46 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://code.jquery.com/jquery-3.6.1.min.js"></script>
+  <script src="https://unpkg.com/obniz@3.24.0/obniz.js"></script>
+  <script type="text/javascript">
+    let obniz = new Obniz("YOUR_OBNIZ_ID");
+    let getData = true;
+    let videoElement = document.getElementById('videoPlayer');
+    let videoSource = 'おしゃべりひろゆき.mp4'; // 再生する動画ファイルのパスに応じて修正
+
+    obniz.onconnect = async function() {
+      let acc = obniz.wired("Grove_3AxisAccelerometer", { sda: 0, scl: 1 }); // I2Cピンの設定に応じて修正
+
+      await obniz.wait(500); // 加速度センサの準備完了を待つ
+
+      setInterval(async function() {
+        if (getData) {
+          let val = await acc.getWait();
+          let x = Math.abs(val[0]);
+          let y = Math.abs(val[1]);
+          let z = Math.abs(val[2]);
+
+          console.log("X: " + x + ", Y: " + y + ", Z: " + z);
+
+          let sum = x + y + z;
+          if (sum > 3) {
+            videoElement.src = videoSource;
+            videoElement.play();
+            getData = false; // データ取得を停止
+            setTimeout(function() {
+              getData = true; // 20秒後にデータ取得を再開
+            }, 20000);
+          }
+        }
+      }, 500); // 0.5秒ごとに加速度データを取得し処理を実行
+    };
+  </script>
 </head>
 <body>
-  <h1>Test</h1>
+  <div id="obniz-debug"></div>
+  <h1>加速度</h1>
+  <video id="videoPlayer" controls></video>
 </body>
 </html>
